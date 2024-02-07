@@ -36,8 +36,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	
-
 	UPROPERTY(EditAnywhere)
 	UClass* Class;
 
@@ -49,6 +47,15 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	TArray<FGeometryPayload> GeometryPayloads;
+
+	void DoActorSpawn1();
+	void DoActorSpawn2();
+	void DoActorSpawn3();
+
+	UFUNCTION()
+	void OnColorChanged(const FLinearColor& Color, const FString& Name);
+	void OnTimerFinished(AActor* Actor);
+
 
 public:	
 	// Called every frame

@@ -4,6 +4,8 @@
 #include "GeometryHubActor.h"
 #include "Engine/World.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogGeometryHub, All, All)
+
 // Sets default values
 AGeometryHubActor::AGeometryHubActor()
 {
@@ -105,14 +107,41 @@ void AGeometryHubActor::DoActorSpawn3()
 	UWorld* World = GetWorld();
 	if (World)
 	{
-
+		
 		for (const FGeometryPayload Payload : GeometryPayloads)
 		{
 			ABaseGeometryActor* Geometry = World->SpawnActorDeferred<ABaseGeometryActor>(Payload.GeometryClass, Payload.InitialTransform);
-			Geometry->SetGeometryData(Payload.Data);
-			Geometry->FinishSpawning(Payload.InitialTransform);
+			if (Geometry)
+			{
+				Geometry->SetGeometryData(Payload.Data);
+				Geometry->OnColorChanged.AddDynamic(this, &AGeometryHubActor::OnColorChanged);
+				Geometry->OnTimerFinished.AddUObject(this, &AGeometryHubActor::OnTimerFinished);
+				Geometry->FinishSpawning(Payload.InitialTransform);
+			}
+		
 		}
 	}
+}
+
+void AGeometryHubActor::OnColorChanged(const FLinearColor& Color, const FString& Name)
+{
+	UE_LOG(LogGeometryHub, Warning, TEXT("Actor name: %s color: %s", *Name, *Color.ToString()));
+}
+
+void AGeometryHubActor::OnTimerFinished(AActor* Actor)
+{
+	if (!Actor) return;
+	UE_LOG(LogGeometryHub, Error, TEXT("Timer finished: %s"), Actor->GetName());
+
+	ABaseGeometryActor* Geometry = Cast<ABaseGeometryActor>(Actor);
+	if (!Geometry) return;
+
+	UE_LOG(LogGeometryHub, Display, TEXT("Cast is success, amplitude %f"), Geometry->GetGeometryData().Amplitude);
+	
+	//为了防止在调用 Destroy() 实际上是调用 BaseGeometryActor 的 EndPlay
+	Geometry->Destroy();
+	//定义多长时间后删除
+	//Geometry->SetLifeSpan(2.0f);
 }
 
 // Called every frame
